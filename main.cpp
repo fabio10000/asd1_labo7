@@ -219,7 +219,7 @@ void testExceptionGarantees() {
 
 int main() {
 
-   int testNr;
+   /*int testNr;
    cin >> testNr;
 
    switch(testNr) {
@@ -242,5 +242,10 @@ int main() {
          break;
       default:
          cout << "No such test number\n";
-   }
+   }*/
+   ArrayDeque<int> dq(10);
+   dq.push_front(2);
+   dq.push_front(32);
+   dq.push_back(5);
+   dq.push_front(12);
 }

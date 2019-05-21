@@ -1,3 +1,6 @@
+/**
+ * authors: Basset Nils, Limem Wènes, Marques Fabio
+ */
 #ifndef ArrayDeque_h
 #define ArrayDeque_h
 
@@ -26,32 +29,39 @@ private:
    size_type debut;
    size_type taille;
 
+   /**
+    * @return index physique qui correspond au dernier élément
+    */
    size_type getLastPhisicalIndex() {
       return (debut + taille) % capacity();
    }
 
+   /**
+    * @param i index physique
+    * @return adresse correspondant au buffer + i
+    */
+   pointer getBufferPointerAt(size_type i) {
+      return buffer + i;
+   }
+
+   /**
+    * @return vrai si le buffer est plein, false s'il est vide
+    */
+   bool full() const {
+      return taille == capacity();
+   }
 public:
    ArrayDeque(size_type cap = 0) : debut(0), taille(0), capacite(cap){
       buffer = capacite != 0 ?
                (pointer) ::operator new(capacite * sizeof(value_type))
                              : nullptr;
+
    }
 
-   ArrayDeque(const ArrayDeque& dq): debut(dq.debut), taille(dq.taille), capacite(dq.capacite) {
-      buffer = dq.capacite != 0 ?
-               (pointer) ::operator new(dq.capacite * sizeof(value_type))
-                             : nullptr;
-      for(auto i = 0; i < dq.taille; i++)
-         new (buffer + i) value_type(dq.at(i));
+   ArrayDeque(const ArrayDeque& dq) : ArrayDeque(dq.capacity()) {
+      for(size_type i = 0; i < dq.taille; i++)
+         push_back(dq.at(i));
    }
-
-   /*ArrayDeque(ArrayDeque&& dq) noexcept {
-      std::cerr << "passe ici" << std::endl;
-      debut = dq.debut;
-      taille = dq.taille;
-      capacite = dq.capacite;
-      swap(buffer, dq.buffer);
-   }*/
 
    ~ArrayDeque() {
       while (taille > 0) {
@@ -61,23 +71,16 @@ public:
    }
 
    ArrayDeque& operator= (const ArrayDeque& dq) {
-      debut = dq.debut;
-      taille = dq.taille;
-      capacite = dq.capacite;
-      buffer = dq.capacite != 0 ?
-               (pointer) ::operator new(dq.capacite * sizeof(value_type))
-                                : nullptr;
-      for(auto i = 0; i < dq.taille; i++)
-         new (buffer + i) value_type(dq.at(i));
-   }
+      ArrayDeque<value_type> tmp(dq.capacity());
+      for (size_type i = 0; i < dq.capacity(); ++i) {
+         tmp.push_back(std::move(dq.at(i)));
+      }
 
-   /*ArrayDeque& operator= (ArrayDeque&& dq) noexcept{
-      std::cerr << "passe dans operator copy deplacement " << std::endl;
-      swap(buffer, dq.buffer);
-      debut = dq.debut;
-      taille = dq.taille;
-      capacite = dq.capacite;
-   }*/
+      std::swap(tmp.buffer, buffer);
+      std::swap(tmp.capacite, capacite);
+      std::swap(tmp.debut, debut);
+      std::swap(tmp.taille, taille);
+   }
 
 
    /**
@@ -99,10 +102,6 @@ public:
     */
    bool empty() const {
       return taille == 0;
-   }
-
-   bool full() const {
-      return taille == capacity();
    }
 
    /**
@@ -132,7 +131,7 @@ public:
          resize();
       }
 
-      new(buffer + getLastPhisicalIndex()) value_type(val);
+      new(getBufferPointerAt(getLastPhisicalIndex())) value_type(val);
       ++taille;
       return *this;
    }
@@ -147,7 +146,7 @@ public:
          resize();
       }
 
-      new(buffer + getLastPhisicalIndex()) value_type(std::move(val));
+      new(getBufferPointerAt(getLastPhisicalIndex())) value_type(std::move(val));
       ++taille;
       return *this;
    }
@@ -162,13 +161,14 @@ public:
          resize();
       }
 
+      size_type newDebut = debut;
       if(!empty()) {
-         debut = debut ? debut - 1 : capacity() - 1;
+         newDebut = newDebut ? newDebut - 1 : capacity() - 1;
       }
 
+      new(getBufferPointerAt(newDebut)) value_type(val);
       ++taille;
-
-      new(buffer + debut) value_type(val);
+      debut = newDebut;
 
       return *this;
    }
@@ -183,14 +183,15 @@ public:
          resize();
       }
 
+      size_type newDebut = debut;
       if(!empty()) {
-         debut = debut ? debut - 1 : capacity() - 1;
+         newDebut = newDebut ? newDebut - 1 : capacity() - 1;
       }
 
-      ++taille;
 
-      new(buffer + debut) value_type(std::move(val));
-      //front() = val;
+      new(getBufferPointerAt(newDebut)) value_type(std::move(val));
+      ++taille;
+      debut = newDebut;
 
       return *this;
    }

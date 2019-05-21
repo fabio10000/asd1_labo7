@@ -113,7 +113,7 @@ public:
 
       ArrayDeque<value_type> tmp(newCapacity);
       for (size_type i = 0; i < capacity(); ++i) {
-         tmp.push_back(at(i));
+         tmp.push_back(std::move(at(i)));
       }
 
       std::swap(tmp.buffer, buffer);
@@ -169,7 +169,6 @@ public:
       ++taille;
 
       new(buffer + debut) value_type(val);
-      //front() = val;
 
       return *this;
    }
